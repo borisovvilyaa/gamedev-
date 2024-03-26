@@ -24,5 +24,5 @@ __Налаштування оточення для подальшої розро
 
 6. **Встановленно та налаштованно ChainSafe та Metamask**
 
-![alt text](image-3.png)
+![alt text](image-33.png)
 
