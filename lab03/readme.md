@@ -29,53 +29,58 @@ https://sepolia.etherscan.io/address/0x19c4334e471b78df8734e6a977e1a1f367d43ada
 // SPDX-License-Identifier: MIT
 // Compatible with OpenZeppelin Contracts ^5.0.0
 
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./ERC20Token.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract DriftItem is ERC721URIStorage, Ownable {
-    string private baseTokenURI;
-    uint256 private price;
-    address private tokenContract;
+contract MatizCarNFT is ERC721, Ownable {
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
 
-    constructor(address initialOwner, string memory _baseTokenURI) Ownable(initialOwner) ERC721("DriftItem", "DRIFTITEM") {
-        baseTokenURI = _baseTokenURI;
+    address public tokenAddress; 
+    string public baseURI; 
+
+    mapping(uint256 => uint256) public tokenPrices; 
+
+    constructor(address _tokenAddress, string memory _baseURI, address _initialOwner) ERC721("MatizCar", "MTZC") Ownable(_initialOwner) {
+        tokenAddress = _tokenAddress;
+        baseURI = _baseURI;
     }
 
-    function setTokenContract(address _tokenContract) external onlyOwner {
-        tokenContract = _tokenContract;
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
+        require(_tokenId <= _tokenIds.current(), "ERC721Metadata: URI query for nonexistent token");
+        return baseURI;
     }
 
-    function setPrice(uint256 _price) external onlyOwner {
-        price = _price;
+    function setBaseURI(string memory _newBaseURI) external onlyOwner {
+        baseURI = _newBaseURI;
     }
 
-    function buyNFT(uint256 _tokenId) external {
-        require(msg.sender != address(0), "Invalid address");
-        require(tokenContract != address(0), "Token contract address not set");
-        require(price > 0, "Price not set");
-
-        // Transfer tokens from the buyer to the owner of the NFT
-        require(DriftCoin(tokenContract).transferFrom(msg.sender, owner(), price), "Transfer failed");
-
-        // Transfer ownership of the NFT
-        _transfer(ownerOf(_tokenId), msg.sender, _tokenId);
+    function mintNFT(address recipient, uint256 price) external onlyOwner returns (uint256) {
+        _tokenIds.increment();
+        uint256 newNFTId = _tokenIds.current();
+        _mint(recipient, newNFTId);
+        tokenPrices[newNFTId] = price;
+        return newNFTId;
     }
 
-    function tokenURI(uint256) public view override returns (string memory) {
-        return baseTokenURI;
-    }
-
-    function setBaseTokenURI(string memory _baseTokenURI) external onlyOwner {
-        baseTokenURI = _baseTokenURI;
+    function buyNFT(uint256 tokenId) external {
+        require(tokenPrices[tokenId] > 0, "This NFT is not for sale.");
+        uint256 price = tokenPrices[tokenId];
+        require(IERC20(tokenAddress).transferFrom(msg.sender, owner(), price), "Token transfer failed.");
+        _transfer(ownerOf(tokenId), msg.sender, tokenId);
+        delete tokenPrices[tokenId];
     }
 }
 
+
 ```
 
-https://sepolia.etherscan.io/tx/0x3a8c132112a1c003518e7c4e1b8b4b544c3711e8472751819e602e4bc3b30475
+https://sepolia.etherscan.io/address/0x3d2ffafd037173e47a920fe66410c9d3e68b7e89
 
 3. **Створив та закинув у ipfs**
 
@@ -84,4 +89,10 @@ https://sepolia.etherscan.io/tx/0x3a8c132112a1c003518e7c4e1b8b4b544c3711e8472751
 https://amber-high-spoonbill-845.mypinata.cloud/ipfs/QmY3Rytfa7p37b7HE1DWw8wimbRXhaVKrtGcTVNn7P5kKB
 
 
-![alt text](image-1.png)
+4. Демонстрація роботи nft
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
+https://testnets.opensea.io/assets/sepolia/0x3d2ffafd037173e47a920fe66410c9d3e68b7e89/1
