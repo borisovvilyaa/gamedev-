@@ -2,23 +2,29 @@
 
 __Основні стандарти токенів. ERC20, ERC721 та ERC1155__
 
-1. **Створено контракт ERC20 та запушив його у мережу **
+1. **Створено контракт ERC20 та задеплоіл його у мережу **
 
 
 ```js
 // SPDX-License-Identifier: MIT
-// Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract DriftCoin is ERC20, Ownable {
+contract DriftCoin is ERC20, ERC20Permit, Ownable {
     constructor(address initialOwner)
-        ERC20("DriftCoin", "DRC")
+        ERC20("DriftCoin", "DM")
+        ERC20Permit("DriftCoin")
         Ownable(initialOwner)
     {}
+
+    function mint(address to, uint256 amount) external onlyOwner {
+        _mint(to, amount);
+    }
 }
+
 ```
 
 https://sepolia.etherscan.io/address/0x19c4334e471b78df8734e6a977e1a1f367d43ada
@@ -60,7 +66,8 @@ contract MatizCarNFT is ERC721, Ownable {
         baseURI = _newBaseURI;
     }
 
-    function mintNFT(address recipient, uint256 price) external onlyOwner returns (uint256) {
+    function mintNFT(uint256 price) external onlyOwner returns (uint256) {
+        address recipient = owner();
         _tokenIds.increment();
         uint256 newNFTId = _tokenIds.current();
         _mint(recipient, newNFTId);
